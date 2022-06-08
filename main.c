@@ -7,12 +7,8 @@
  * 
  * @copyright Copyright (c) 2022
  * 
- * Documentacion:
-    - Pruebas hechas con un gran exito, solo problemas visuales tales como 00, que al ser un numero lo toma como 0.
+ * TODO(1):
     - Hacer una busqueda por el lugar de salida y llegada para COMPRAR PASAJE
-    - Subir a Github para tener el codigo mas ordenado y con respaldo
-    - Consulta de buses, muestre la hora, lugar y id, y dado un id muestrar los datos del bus
-    - boleta mostrar en desde, hasta la fecha
  */
 
 /* Librerias */
@@ -39,7 +35,6 @@ typedef struct s_boleto{
     BUS bus;
 } BOLETO;
 
-
 typedef struct s_elemento{
 	BUS bus;
 	struct s_elemento *siguiente;
@@ -50,13 +45,13 @@ typedef struct s_fila_enlazada{
 	struct s_elemento *frente, *ultimo;
 } FILA;
 
-
 /* Prototipos Generales */
 
 int interfaz();
 int aleatoreo(int, int);
 void mostrarBoleto(BOLETO);
 void mostrarBus(BUS);
+void mostrarFecha(FECHA);
 BOLETO crearBoleto(int, int, int, int, int, char*, char*, FECHA, BUS);
 FECHA crearFecha(int, int, int, int, int);
 BUS crearBus(int, int*, char*, char*, FECHA, FECHA);
@@ -112,8 +107,35 @@ int interfaz(){
                 x_f = cargarArchivo("misdatos.txt");
                 while (esVacia(x_f) != 1)
                 {
-                    mostrarBus(x_f.frente->bus);
+                    printf("ID: %d\n", x_f.frente->bus.id);
+                    printf("DESDE: %s\t", x_f.frente->bus.Salida);
+                    mostrarFecha(x_f.frente->bus.fsalida);
+                    printf("HASTA: %s\t", x_f.frente->bus.Llegada);
+                    mostrarFecha(x_f.frente->bus.fllegada);
+                    contadorBuses++;
                     x_f = extraer(x_f);
+                }
+                printf("\n");
+                /* Elegir bus para mostrar su disponibilidad */
+                do
+                {
+                    printf("Identificador: ");
+                    scanf("%d", &id);
+                    if (id < 1 || id > contadorBuses)
+                        printf("Ingrese un identificador valido.\n");
+                } while (id < 1 || id > contadorBuses);
+                x_f.frente = x_f.elementos;
+                contadorBuses = 1;
+                while (verdad == 0)
+                {
+                    if (id == contadorBuses)
+                    {
+                        verdad = 1;
+                        mostrarBus(x_f.frente->bus);
+                        break;
+                    }
+                    x_f = extraer(x_f);
+                    contadorBuses++;
                 }
                 system("pause");
                 break;
@@ -123,19 +145,24 @@ int interfaz(){
                 /* Mostrar datos */
                 while (esVacia(x_f) != 1)
                 {
-                    mostrarBus(x_f.frente->bus);
+                    printf("ID: %d\n", x_f.frente->bus.id);
+                    printf("DESDE: %s\t", x_f.frente->bus.Salida);
+                    mostrarFecha(x_f.frente->bus.fsalida);
+                    printf("HASTA: %s\t", x_f.frente->bus.Llegada);
+                    mostrarFecha(x_f.frente->bus.fllegada);
                     contadorBuses++;
                     x_f = extraer(x_f);
                 }
-                x_f = cargarArchivo("misdatos.txt");
 
                 /* Elegir bus */
                 do
                 {
                     printf("Identificador: ");
                     scanf("%d", &id);
-                    
-                } while (id < 1 && id > contadorBuses);
+                    if (id < 1 || id > contadorBuses)
+                        printf("Ingrese un identificador valido.\n");
+                } while (id < 1 || id > contadorBuses);
+                x_f.frente = x_f.elementos;
                 contadorBuses = 1;
                 while (verdad == 0)
                 {
@@ -154,7 +181,7 @@ int interfaz(){
                     printf("# Asiento : ");
                     scanf("%d", &asiento);
                     if (asiento < 0 || 1 == x_f.frente->bus.disponibilidad[asiento-1])
-                        printf("Bus no valido o ya esta ocupado\n");
+                        printf("Ya esta ocupado.\n");
                 } while (asiento < 0 || 1 == x_f.frente->bus.disponibilidad[asiento-1]);
                 x_f.frente->bus.disponibilidad[asiento-1] = 1;
 
@@ -164,6 +191,8 @@ int interfaz(){
                 {
                     printf("Paga con: $");
                     scanf("%d", &pagado);
+                    if (pagado<0 || pagado < valorPasaje)
+                        printf("Ingrese una cantidad valida.\n.");
                 } while (pagado<0 || pagado < valorPasaje);
                 
                 /* Ingreso datos extras */
@@ -172,8 +201,7 @@ int interfaz(){
                 printf("Correo electronico : ");
                 scanf("%49s", correo);
 
-                
-                
+                /* Crear boleta, mostrar datos por consola y guardar los cambios */
                 x_boleto = crearBoleto(aleatoreo(1,100), valorPasaje, pagado, pagado-valorPasaje, asiento, numero, correo, obtenerFecha(), x_f.frente->bus);
                 x_f.frente = x_f.elementos;
                 guardarArchivo(x_f, "misdatos.txt");
@@ -207,26 +235,13 @@ void mostrarBoleto(BOLETO b){
     printf("-----------BOLETO-----------\n");
     printf("----------------------------\n");
     printf("ID: %d\t", b.id);
-    if (b.fcompra.hora == 0)
-        printf("00:");
-    else
-        printf("%d:", b.fcompra.hora);
-    if (b.fcompra.minuto == 0)
-        printf("00 ");
-    else
-        printf("%d ", b.fcompra.minuto);
-    if (b.fcompra.dia <10)
-        printf("0");
-    printf("%d/", b.fcompra.dia);
-    if (b.fcompra.mes <10)
-        printf("0");
-    printf("%d/", b.fcompra.dia);
-    printf("%d\n", b.fcompra.anio);
     printf("MONTO: $%d\n", b.monto);
     printf("PAGADO: $%d\n", b.pagado);
     printf("VUELTO: $%d\n", b.vuelto);
-    printf("DESDE: %s", b.bus.Salida);
-    printf("HASTA: %s", b.bus.Llegada);
+    printf("DESDE: %s\t", b.bus.Salida);
+    mostrarFecha(b.bus.fsalida);
+    printf("HASTA: %s\t", b.bus.Llegada);
+    mostrarFecha(b.bus.fllegada);
     printf("ASIENTO: %d\n", b.asiento);
     printf("NUMERO: %s\n", b.numero);
     printf("CORREO: %s\n", b.correo);
@@ -262,40 +277,34 @@ void mostrarBus(BUS b){
     }
     printf("----------------------------\n");
     printf("Desde: %s\t", b.Salida);
-    if (b.fsalida.hora == 0)
-        printf("00:");
-    else
-        printf("%d:", b.fsalida.hora);
-    if (b.fsalida.minuto == 0)
-        printf("00 ");
-    else
-        printf("%d ", b.fsalida.minuto);
-    if (b.fsalida.dia <10)
-        printf("0");
-    printf("%d/", b.fsalida.dia);
-    if (b.fsalida.mes <10)
-        printf("0");
-    printf("%d/", b.fsalida.dia);
-    printf("%d\n", b.fsalida.anio);
+    mostrarFecha(b.fsalida);
 
     printf("Hasta: %s\t", b.Llegada);
-    if (b.fllegada.hora == 0)
-        printf("00:");
-    else
-        printf("%d:", b.fllegada.hora);
-    if (b.fllegada.minuto == 0)
-        printf("00 ");
-    else
-        printf("%d ", b.fllegada.minuto);
-    if (b.fllegada.dia <10)
-        printf("0");
-    printf("%d/", b.fllegada.dia);
-    if (b.fllegada.mes <10)
-        printf("0");
-    printf("%d/", b.fllegada.dia);
-    printf("%d\n", b.fllegada.anio);
+    mostrarFecha(b.fllegada);
 }
 
+/**
+ * @brief Mostrar los datos de una fecha HH:MM DD/MM/AA
+ * 
+ * @param f Fecha
+ */
+void mostrarFecha(FECHA f){
+    if (f.hora == 0)
+        printf("00:");
+    else
+        printf("%d:",f.hora);
+    if (f.minuto == 0)
+        printf("00 ");
+    else
+        printf("%d ", f.minuto);
+    if (f.dia <10)
+        printf("0");
+    printf("%d/", f.dia);
+    if (f.mes <10)
+        printf("0");
+    printf("%d/", f.dia);
+    printf("%d\n", f.anio);
+}
 /**
  * @brief 
  * 
