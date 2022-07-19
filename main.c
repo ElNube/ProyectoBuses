@@ -8,13 +8,14 @@
  * @copyright Copyright (c) 2022
  * 
  * TODO(1):
-    - Hacer una busqueda por el lugar de salida y llegada para COMPRAR PASAJE
+    - Hacer una busqueda por el lugar de Origen y Destino para COMPRAR PASAJE //!!Posiblemente listo, solo que la cantidad de concidencias es limitada a 30
  */
 
 /* Librerias */
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <ctype.h>
 
 /* Estructuras */
 
@@ -24,7 +25,7 @@ typedef struct s_fecha{
 
 typedef struct s_bus{
     int disponibilidad[40], id;
-    char Salida[40], Llegada[40];
+    char Origen[40], Destino[40];
     FECHA fsalida, fllegada;
 } BUS;
 
@@ -58,7 +59,10 @@ BUS crearBus(int, int*, char*, char*, FECHA, FECHA);
 FILA cargarArchivo(char*);
 void guardarArchivo(FILA, char*);
 FECHA obtenerFecha(void);
+int cadenasIguales(char*, char*);
 
+/* Zonas de prueba */
+int zona1();
 /* Prototipos FILA */
 
 FILA crearFila();
@@ -71,13 +75,23 @@ BUS verFrente(FILA);
 int main(){
     srand(time(0));
     int n;
-
+    //zona1();
     /* Menu */
     do
     {
         n = interfaz();
     } while(n != 0);
     printf("QUE TENGA BUEN DIA\n");
+    system("pause");
+    return 0;
+}
+int zona1(){
+    char a[50] = "Hola", b[50];
+    scanf("%49s", b);
+    if (cadenasIguales(a,b) == 1)
+        printf("Son iguales\n");
+    else
+        printf("No son iguales\n");
     system("pause");
     return 0;
 }
@@ -93,9 +107,11 @@ int interfaz(){
      * @param verdad Logica para usar en bucles 1 : true; 0 : false
      * 
      */
-    int n, asiento, id, pagado, contadorBuses=0, valorPasaje = 3000, verdad = 0;
-    char numero[50], correo[50];
-    FILA x_f = crearFila();
+    int n, asiento, id, pagado, contadorBuses=0, valorPasaje = 3000, verdad = 0, ides[30], index;
+    for (int i = 0; i <30; i++)
+        ides[i] = -1;
+    char numero[50], correo[50], cadena[40];
+    FILA x_f;// = crearFila();
     BOLETO x_boleto;
     do
     {
@@ -105,27 +121,62 @@ int interfaz(){
         {
             case 1:
                 x_f = cargarArchivo("misdatos.txt");
+               
+                printf("\n");
+                printf("Lugar de destino: ");
+                scanf("%49s", cadena);
+
+                /* Uppercase */
+                for (int indice = 0; cadena[indice] != '\0'; ++indice)
+                    cadena[indice] = toupper(cadena[indice]);
+                
+                /* Contar la cantidad de buses */
                 while (esVacia(x_f) != 1)
                 {
-                    printf("ID: %d\n", x_f.frente->bus.id);
-                    printf("DESDE: %s\t", x_f.frente->bus.Salida);
-                    mostrarFecha(x_f.frente->bus.fsalida);
-                    printf("HASTA: %s\t", x_f.frente->bus.Llegada);
-                    mostrarFecha(x_f.frente->bus.fllegada);
+                    x_f = extraer(x_f);
                     contadorBuses++;
+                }
+
+                /* Mostrar los buses que coiciden con el destino */
+                x_f.frente = x_f.elementos;
+                index = 0;
+                while (esVacia(x_f) != 1)
+                {
+                    if (cadenasIguales(cadena, x_f.frente->bus.Destino) == 1)
+                    {
+                        printf("ID: %d\n", x_f.frente->bus.id);
+                        printf("DESDE: %s\t", x_f.frente->bus.Origen);
+                        mostrarFecha(x_f.frente->bus.fsalida);
+                        printf("HASTA: %s\t", x_f.frente->bus.Destino);
+                        mostrarFecha(x_f.frente->bus.fllegada);
+                        ides[index] = x_f.frente->bus.id;
+                        verdad = 1;
+                    }
                     x_f = extraer(x_f);
                 }
-                printf("\n");
+                if (verdad == 0)
+                {
+                    printf("Lugar no encontrado.\n");
+                    system("pause");
+                    break;
+                }
                 /* Elegir bus para mostrar su disponibilidad */
+                verdad = 0;
                 do
                 {
                     printf("Identificador: ");
                     scanf("%d", &id);
-                    if (id < 1 || id > contadorBuses)
+                    for (int i = 0; i < 30; i++)
+                    {
+                        if (id == ides[i])
+                            verdad = 1;
+                    }
+                    if (verdad == 0)
                         printf("Ingrese un identificador valido.\n");
-                } while (id < 1 || id > contadorBuses);
+                } while (verdad == 0);
                 x_f.frente = x_f.elementos;
                 contadorBuses = 1;
+                verdad =0;
                 while (verdad == 0)
                 {
                     if (id == contadorBuses)
@@ -141,14 +192,119 @@ int interfaz(){
                 break;
             case 2:
                 x_f = cargarArchivo("misdatos.txt");
+               
+                printf("\n");
+                printf("Lugar de destino: ");
+                scanf("%49s", cadena);
+
+                /* Uppercase */
+                for (int indice = 0; cadena[indice] != '\0'; ++indice)
+                    cadena[indice] = toupper(cadena[indice]);
+                
+                /* Contar la cantidad de buses */
+                while (esVacia(x_f) != 1)
+                {
+                    x_f = extraer(x_f);
+                    contadorBuses++;
+                }
+
+                /* Mostrar los buses que coiciden con el destino */
+                x_f.frente = x_f.elementos;
+                index = 0;
+                while (esVacia(x_f) != 1)
+                {
+                    if (cadenasIguales(cadena, x_f.frente->bus.Destino) == 1)
+                    {
+                        printf("ID: %d\n", x_f.frente->bus.id);
+                        printf("DESDE: %s\t", x_f.frente->bus.Origen);
+                        mostrarFecha(x_f.frente->bus.fsalida);
+                        printf("HASTA: %s\t", x_f.frente->bus.Destino);
+                        mostrarFecha(x_f.frente->bus.fllegada);
+                        ides[index] = x_f.frente->bus.id;
+                        verdad = 1;
+                    }
+                    x_f = extraer(x_f);
+                }
+                if (verdad == 0)
+                {
+                    printf("Lugar no encontrado.\n");
+                    system("pause");
+                    break;
+                }
+                /* Elegir bus para mostrar su disponibilidad */
+                verdad = 0;
+                do
+                {
+                    printf("Identificador: ");
+                    scanf("%d", &id);
+                    for (int i = 0; i < 30; i++)
+                    {
+                        if (id == ides[i])
+                            verdad = 1;
+                    }
+                    if (verdad == 0)
+                        printf("Ingrese un identificador valido.\n");
+                } while (verdad == 0);
+                contadorBuses = 1;
+                verdad = 0;
+                x_f.frente = x_f.elementos;
+                while (verdad == 0)
+                {
+                    if (id == contadorBuses)
+                    {
+                        mostrarBus(x_f.frente->bus);
+                        verdad = 1;
+                        break;
+                    }
+                    x_f = extraer(x_f);
+                    contadorBuses++;
+                }
+
+                /* Elegir asiento */
+                do
+                {
+                    printf("# Asiento : ");
+                    scanf("%d", &asiento);
+                    if (asiento < 1 || asiento>40)
+                        printf("Asiento no valido.\n");
+                    if (1 == x_f.frente->bus.disponibilidad[asiento-1])
+                        printf("Ya esta ocupado.\n");
+                } while (asiento < 1 || 1 == x_f.frente->bus.disponibilidad[asiento-1] || asiento>40);
+                x_f.frente->bus.disponibilidad[asiento-1] = 1;
+
+                /* Pagar */
+                printf("El pasaje vale $%d\n", valorPasaje);
+                do
+                {
+                    printf("Paga con: $");
+                    scanf("%d", &pagado);
+                    if (pagado<0 || pagado < valorPasaje)
+                        printf("Ingrese una cantidad valida.\n.");
+                } while (pagado<0 || pagado < valorPasaje);
+                
+                /* Ingreso datos extras */
+                printf("Numero de telefono : ");
+                scanf("%49s", numero);
+                printf("Correo electronico : ");
+                scanf("%49s", correo);
+
+                /* Crear boleta, mostrar datos por consola y guardar los cambios */
+                x_boleto = crearBoleto(aleatoreo(1,100), valorPasaje, pagado, pagado-valorPasaje, asiento, numero, correo, obtenerFecha(), x_f.frente->bus);
+                x_f.frente = x_f.elementos;
+                guardarArchivo(x_f, "misdatos.txt");
+                mostrarBoleto(x_boleto);
+                system("pause");
+                break;
+            case 10:
+                x_f = cargarArchivo("misdatos.txt");
                 
                 /* Mostrar datos */
                 while (esVacia(x_f) != 1)
                 {
                     printf("ID: %d\n", x_f.frente->bus.id);
-                    printf("DESDE: %s\t", x_f.frente->bus.Salida);
+                    printf("DESDE: %s\t", x_f.frente->bus.Origen);
                     mostrarFecha(x_f.frente->bus.fsalida);
-                    printf("HASTA: %s\t", x_f.frente->bus.Llegada);
+                    printf("HASTA: %s\t", x_f.frente->bus.Destino);
                     mostrarFecha(x_f.frente->bus.fllegada);
                     contadorBuses++;
                     x_f = extraer(x_f);
@@ -180,9 +336,11 @@ int interfaz(){
                 {
                     printf("# Asiento : ");
                     scanf("%d", &asiento);
-                    if (asiento < 0 || 1 == x_f.frente->bus.disponibilidad[asiento-1])
+                    if (asiento < 1 || asiento>40)
+                        printf("Asiento no valido.\n");
+                    if (1 == x_f.frente->bus.disponibilidad[asiento-1])
                         printf("Ya esta ocupado.\n");
-                } while (asiento < 0 || 1 == x_f.frente->bus.disponibilidad[asiento-1]);
+                } while (asiento < 1 || 1 == x_f.frente->bus.disponibilidad[asiento-1] || asiento>40);
                 x_f.frente->bus.disponibilidad[asiento-1] = 1;
 
                 /* Pagar */
@@ -238,9 +396,9 @@ void mostrarBoleto(BOLETO b){
     printf("MONTO: $%d\n", b.monto);
     printf("PAGADO: $%d\n", b.pagado);
     printf("VUELTO: $%d\n", b.vuelto);
-    printf("DESDE: %s\t", b.bus.Salida);
+    printf("DESDE: %s\t", b.bus.Origen);
     mostrarFecha(b.bus.fsalida);
-    printf("HASTA: %s\t", b.bus.Llegada);
+    printf("HASTA: %s\t", b.bus.Destino);
     mostrarFecha(b.bus.fllegada);
     printf("ASIENTO: %d\n", b.asiento);
     printf("NUMERO: %s\n", b.numero);
@@ -276,10 +434,10 @@ void mostrarBus(BUS b){
             printf("\n");
     }
     printf("----------------------------\n");
-    printf("Desde: %s\t", b.Salida);
+    printf("Desde: %s\t", b.Origen);
     mostrarFecha(b.fsalida);
 
-    printf("Hasta: %s\t", b.Llegada);
+    printf("Hasta: %s\t", b.Destino);
     mostrarFecha(b.fllegada);
 }
 
@@ -361,19 +519,19 @@ FECHA crearFecha(int mi, int h, int d, int me, int a){
  * 
  * @param i identificador
  * @param d array de disponibilidad
- * @param ls Lugar salida
- * @param ll Lugar Llegada
+ * @param lo Lugar Origen
+ * @param ld Lugar Destino
  * @param fs Fecha salida
  * @param fl Fecha llegada
  * @return BUS 
  */
-BUS crearBus(int i, int *d, char *ls, char *ll, FECHA fs, FECHA fl){
+BUS crearBus(int i, int *d, char *lo, char *ld, FECHA fs, FECHA fl){
     BUS b;
     b.id = i;
     for (int i=0; i<40; i++){
         b.disponibilidad[i] = d[i];
-        b.Salida[i] = ls[i];
-        b.Llegada[i] = ll[i];
+        b.Origen[i] = lo[i];
+        b.Destino[i] = ld[i];
     }
     b.fsalida = fs;
     b.fllegada = fl;
@@ -388,33 +546,38 @@ BUS crearBus(int i, int *d, char *ls, char *ll, FECHA fs, FECHA fl){
  */
 FILA cargarArchivo(char *direccion){
     int datoExtraido[11], dispo[40];
-    char auxSalida[50], auxLlegada[50], aux[50];
+    char auxOrigen[50], auxDestino[50], aux[50];
     FILE* fichero;
     FILA x_fila = crearFila();
     BUS x_bus;
     FECHA x_fechas, x_fechal;
     
     //LECTURA
-    
+    /* Abro el fichero con permisos de lectura */
     fichero = fopen(direccion, "rt");
+    /* Digo cuantos datos de buses quiero guardar */
     for (int i =0; i < 2; i++)
     {
+        /* Identificador */
         fscanf (fichero, "%d", &datoExtraido[0]);
+        /* Fecha Salida y Llegada */
         for (int j = 1; j < 11; j++)
             fscanf (fichero, "%d", &datoExtraido[j]);
+        /* Basura */
         fgets(aux, 50, fichero);
-        fgets(auxSalida, 50, fichero);
-        fgets(auxLlegada, 50, fichero);
+        /* Origen */
+        fgets(auxOrigen, 50, fichero);
+        /* Llegada */
+        fgets(auxDestino, 50, fichero);
+        /* Disponibilidad */
         for (int j = 0; j < 40; j++)
             fscanf (fichero, "%d", &dispo[j]);
         x_fechas = crearFecha(datoExtraido[1], datoExtraido[2], datoExtraido[3], datoExtraido[4], datoExtraido[5]);
         x_fechal = crearFecha(datoExtraido[6], datoExtraido[7], datoExtraido[8], datoExtraido[9], datoExtraido[10]);
-        x_bus = crearBus(datoExtraido[0], dispo, auxSalida, auxLlegada, x_fechas, x_fechal);
+        x_bus = crearBus(datoExtraido[0], dispo, auxOrigen, auxDestino, x_fechas, x_fechal);
         x_fila = agregar(x_fila, x_bus);
     }
     fclose(fichero);
-    //printf(">>>Proceso de lectura completado\n");
-    //system("pause");
     return x_fila;
 }
 
@@ -427,33 +590,39 @@ FILA cargarArchivo(char *direccion){
 void guardarArchivo(FILA f, char *direccion){
     FILE* fichero;
     //ESCRITURA
-
+    /* Abrir el fichero con permisos de escritura */
     fichero = fopen(direccion, "wt");
+    /* Vaciar la fila de datos */
     while (esVacia(f) != 1)
     {
+        /* Identificador */
         fprintf (fichero, "%d ", f.frente->bus.id);
+        /* Fecha de salida */
         fprintf (fichero, "%d ", f.frente->bus.fsalida.minuto);
         fprintf (fichero, "%d ", f.frente->bus.fsalida.hora);
         fprintf (fichero, "%d ", f.frente->bus.fsalida.dia);
         fprintf (fichero, "%d ", f.frente->bus.fsalida.mes);
         fprintf (fichero, "%d ", f.frente->bus.fsalida.anio);
+        /* Fecha de llegada */
         fprintf (fichero, "%d ", f.frente->bus.fllegada.minuto);
         fprintf (fichero, "%d ", f.frente->bus.fllegada.hora);
         fprintf (fichero, "%d ", f.frente->bus.fllegada.dia);
         fprintf (fichero, "%d ", f.frente->bus.fllegada.mes);
         fprintf (fichero, "%d ", f.frente->bus.fllegada.anio);
         fprintf (fichero, "%c", '\n');
-        fprintf (fichero, "%s", f.frente->bus.Salida);
-        fprintf (fichero, "%s", f.frente->bus.Llegada);
+        /* Origen */
+        fprintf (fichero, "%s", f.frente->bus.Origen);
+        /* Destino */
+        fprintf (fichero, "%s", f.frente->bus.Destino);
+        /* Disponibilidad */
         for (int i=0; i<39; i++)
             fprintf (fichero, "%d ", f.frente->bus.disponibilidad[i]);
-            //fprintf (fichero, "%d ", aleatoreo(0,1));
         fprintf (fichero, "%d %c", f.frente->bus.disponibilidad[39], '\n');
+        
         f = extraer(f);
     }
+    /* Cerrar fichero */
     fclose(fichero);
-    //printf("<<<Proceso de escritura completado \n");
-    //system("pause");
 }
 
 FECHA obtenerFecha(void){
@@ -463,6 +632,46 @@ FECHA obtenerFecha(void){
     struct tm tiempoLocal = *localtime(&t);
     f = crearFecha(tiempoLocal.tm_min, tiempoLocal.tm_hour, tiempoLocal.tm_mday, tiempoLocal.tm_mon+1, tiempoLocal.tm_year+1900);
     return f;
+}
+
+/**
+ * @brief Compara 2 cadenas de textos
+ * 
+ * @param c1 cadena 1 
+ * @param c2 cadena 2 
+ * @return int 1 si son iguales, 0 si no lo son.
+ */
+int cadenasIguales(char *c1, char *c2) {
+    int cantidadCadena1 = 0, cantidadCadena2 = 0;
+    /* Ver el tamaño de la cadena 1 */
+    for (int i = 0; i <50; i++)
+    {
+        if (c1[i] == '\n' || c1[i] == '\0')
+            break;
+        cantidadCadena1++;
+    }
+    /* Ver el tamaño de la cadena 2 */
+    for (int i = 0; i <50; i++)
+    {
+        if (c2[i] == '\n' || c2[i] == '\0')
+                break;
+            cantidadCadena2++;
+    }
+
+    /* Si no tienen el mismo tamaño no son iguales */
+    if (cantidadCadena1 == cantidadCadena2)
+    {
+        /* Compara caracteres a caracteres si 1 es diferente inmediatamente devuelve un 0 */
+        for (int i = 0; i < cantidadCadena1; i++)
+        {
+            if (c1[i] != c2[i])
+                return 0;
+        }
+        return 1;
+    }
+    else
+        return 0;
+    
 }
 //!! -- agregar funciones aqui
 /**
